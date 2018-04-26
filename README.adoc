@@ -1,0 +1,17 @@
+# Einführung in Gradle und Docker
+
+In dieser Vorlesung befassen wir uns mit den beiden Tools Gradle und Docker. Dabei haben wir ein paar Codebeispiele gesehen, die in diesem Repository zusammengefasst wurde.
+
+Die Folien befinden sich hier: https://n2o.github.io/lecture-ss18-gradle-docker
+
+## dockerized-gradle
+
+Erzeuge ein Hello World-Programm in Java und verpacke es in einen Container.
+
+## gradle-docker-redis
+
+Startet eine Redis-Instanz und verbindet sich aus Java heraus zu dieser Datenbank. Der Wert `starts` wird bei jedem Aufruf inkrementiert und zeigt den aktuellen Wert auf der Konsole, falls man sich verbinden konnte.
+
+## webserver
+
+Kleiner Nginx-Server mit `index.html`-Datei, welche im Browser angezeigt wird und geändert werden kann. Die Änderungen sind dann beim Neuladen des Browsers einsehbar.

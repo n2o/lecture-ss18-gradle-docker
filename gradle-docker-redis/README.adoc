@@ -1,0 +1,17 @@
+# Gradle-Projekt mit Verbindung zu Redis
+
+Wir verwenden hier als einfache Datenbank Redis, um ein paar Daten in eine externe Datenbank zu speichern. Dafür muss zuerst Redis gestartet werden und anschließend wird der Wert `starts` geschrieben und ausgegeben. Das Programm zählt demnach wie häufig es ausgeführt wurde.
+
+## Benutzung
+
+Redis starten::
+[source, bash]
+----
+docker run -p 6379:6379 redis:alpine
+----
+
+Projekt ausführen::
+[source, bash]
+----
+ gradle run
+----

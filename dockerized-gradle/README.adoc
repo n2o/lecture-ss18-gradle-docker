@@ -1,0 +1,17 @@
+# Dockerized Gradle
+
+Hier haben wir ein Dockerfile, welches für eine Gradle-Umgebung sorgt, die Dateien aus diesem Verzeichnis in das gewünschte Verzeichnis im Container kopiert und dann `gradle run` ausführt.
+
+## Benutzung
+
+Image bauen::
+[source, bash]
+----
+docker build -t dockergradle .
+----
+
+Container starten::
+[source, bash]
+----
+docker run dockergradle
+----

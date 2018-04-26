@@ -1,0 +1,15 @@
+# Webserver mit Volume Binding
+
+An diesem Beispiel wurde in der Vorlesung gezeigt, wie ein Webserver gestartet werden kann und anschließend wird der Inhalt des laufenden Containers verändert. Dafür verwendet wir ein *Volume Binding*, welches wir mit dem Parameter `-v` aktivieren. Dabei müssen wir uns mit `pwd` das aktuelle Verzeichnis holen, also der Ordner in dem wir uns gerade befinden, und ihn an die entsprechende Stelle im Container schieben.
+
+## Benutzung
+
+Nginx starten::
+[source, bash]
+----
+docker run -p 80:80 -v `pwd`:/usr/share/nginx/html nginx:alpine
+----
+
+Webbrowser öffnen: http://localhost
+
+`index.html` verändern und den Browser neu laden.
