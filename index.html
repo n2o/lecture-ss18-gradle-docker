@@ -1,0 +1,821 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+  <title>Einführung in Gradle und Docker &ndash; Professionelle Softwareentwicklung</title>
+
+  <link rel="stylesheet" href="css/assets/bootstrap-grid.min.css">
+
+  <link rel="stylesheet" href="reveal.js/css/reveal.css">
+
+  <!-- Theme used for syntax highlighting of code -->
+  <link rel="stylesheet" href="css/highlight/github.css">
+
+  <!-- Base Theme for presentation -->
+  <link rel="stylesheet" href="css/theme/hhu/hhu.css">
+
+  <!-- Printing and PDF exports -->
+  <script>
+      var link = document.createElement('link');
+      link.rel = 'stylesheet';
+      link.type = 'text/css';
+      link.href = window.location.search.match(/print-pdf/gi) ? 'reveal.js/css/print/pdf.css' : 'reveal.js/css/print/paper.css';
+      document.getElementsByTagName('head')[0].appendChild(link);
+  </script>
+
+  <style>
+    .bg-blue {
+      background-color: #176fc1;
+    }
+
+    .bg-red {
+      background-color: #be0a26;
+    }
+
+    .bg-green {
+      background-color: #97bf0d;
+    }
+
+    .bg-grey {
+      background-color: #d9dadb;
+    }
+
+    .box-white {
+      background-color: white;
+      border: 0.5px solid #176fc1 !important;
+    }
+
+    .controls button {
+      color: #d9dadb !important;
+    }
+  </style>
+</head>
+<body>
+<div class="reveal">
+  <div id="logo">
+    <object data="css/theme/hhu/img/unilogo.svg" type="image/svg+xml"></object>
+  </div>
+  <header><span></span></header>
+  <div id="slidenumber"></div>
+
+  <div class="slides">
+    <section data-state="footer">
+      <div id="title">
+        <!--<h4>Strukturierte Diskussionen &ndash; und nun?</h4>-->
+        <h3>Einführung in
+          <img src="img/gradle_logo.svg" style="height: 0.9em;line-height:1em;margin-bottom: -2px;">
+          und
+          <img src="img/docker_horizontal.svg" style="height: 1.3em;line-height:1.5em;margin-bottom: -12px;">
+        </h3>
+        <hr/>
+        <p style="font-size: 0.8em;">
+          <strong>Christian Meter</strong>
+        </p>
+        <small>
+          Professionelle Softwareentwicklung SS 2018<br>
+          26.04.2018<br><br>
+          Institut für Informatik<br>
+          Heinrich-Heine-Universität Düsseldorf<br>
+          <br>
+          meter@cs.uni-duesseldorf.de
+        </small>
+      </div>
+    </section>
+
+    <section>
+      <h2>Tutoren und Korrektoren gesucht</h2>
+      <p>... für die vorlesungsfreie Zeit<br>August und September</p>
+      <ul>
+        <li>Vorkurs<br>(10h pro Woche)</li>
+        <li>Praktikum Hardwarenahe Programmierung<br>(17h pro Woche)</li>
+      </ul>
+
+      <div class="spacer-small"></div>
+
+      <h4>
+        Bewerbung:
+        <a href="https://cs.hhu.de/jobs">https://cs.hhu.de/jobs</a>
+      </h4>
+    </section>
+
+    <section data-state="admin">
+      <style>.admin header span:after {
+        content: "Organisatorisches";
+      } </style>
+      <h3>Projekt 1</h3>
+      <p>Wurde großteils korrigiert</p>
+      <p>Schauen Sie <span class="highlight">täglich</span> nach, ob Ihr Projekt korrigiert wurde und ob es nachgereicht
+        werden muss!</p>
+    </section>
+
+    <section data-state="classpathhorror">
+      <style>.classpathhorror header span:after {
+        content: "Java Classpath: Eine Horror-Story für sich";
+      } </style>
+      <h4>Allgemein: PATH</h4>
+      <p>Suchpfad, den Ihr Betriebssystem zum Nachschlagen verwendet
+        <small>(z.B. für Binaries)</small>
+      </p>
+      <pre class="bash"><code>λ echo $PATH
+/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin</code></pre>
+    </section>
+
+    <section data-state="classpathhorror">
+      <h4>CLASSPATH von Java</h4>
+      <p>Suchpfad, an denen der Java-Compiler u.A.<br>nach Class- / Jar-Dateien sucht</p>
+      <div class="spacer-small"></div>
+      <p>Standard: <code>.</code>
+        <br>
+        <small>(das aktuelle Verzeichnis)</small>
+      </p>
+    </section>
+
+    <section data-state="classpath">
+      <style>.classpath header span:after {
+        content: "Java Classpath";
+      } </style>
+      <p>Das funktioniert auch erstmal ganz gut so...</p>
+      <pre class="bash"><code>λ javac HelloWorld.java
+λ java HelloWorld
+Hello, world!</code></pre>
+    </section>
+
+    <section data-state="classpath">
+      <p>
+        ... aber hat man externe Bibliotheken (z.B.
+        <a href="https://junit.org/junit5/">JUnit</a>
+        fürs Testing), dann muss ein anderer Classpath gesetzt werden
+      </p>
+      <pre class="bash"><code>λ javac -cp .:junit-4.12.jar:hamcrest-core-1.3.jar MyLibTest.java
+
+λ java -cp .:junit-4.12.jar:hamcrest-core-1.3.jar \
+       org.junit.runner.JUnitCore MyLibTest</code></pre>
+      <pre class="bash"><code>JUnit version 4.12
+.
+Time: 0,004
+
+OK (1 test)</code></pre>
+    </section>
+
+    <section data-state="classpath">
+      <p>Diese Befehle lassen sich mit Skripten festschreiben...</p>
+      <p>... oder man nimmt direkt ein Build-Tool</p>
+    </section>
+
+    <section data-state="build-tools">
+      <style>.build-tools header span:after {
+        content: "Build-Tools";
+      } </style>
+      <h4>Build-Tools</h4>
+      <p>unterstützen beim Bauen von Projekten
+        <small>(wie der Name schon sagt)</small>
+        ,
+        Kompilieren, Abhängigkeiten downloaden + einbinden, Classpath setzen, ...
+      </p>
+      <div class="spacer-small"></div>
+      <p>Kurz: Alles, worum wir uns eigentlich gar nicht kümmern wollen</p>
+    </section>
+
+    <section data-state="build-tools">
+      <p>
+        <strong>Ant (2000)</strong><br>
+        erstes modernes Build-Tool für Java
+      </p>
+
+      <div class="spacer-small"></div>
+
+      <p>
+        <strong>Maven (2002)</strong><br>
+        Dependency-Management (MavenCentral)<br>
+        <a href="https://de.wikipedia.org/wiki/Konvention_vor_Konfiguration">Konvention-vor-Konfiguration</a>
+      </p>
+
+      <div class="spacer-small"></div>
+
+      <p>
+        <strong>
+          <img src="img/gradle_logo.svg" style="height: 0.9em;line-height:1em;margin-bottom: -2px;">
+          (2007)
+        </strong>
+        <br>
+        Gradle Skripte sind direkt ausführbarer Code<br>
+        <span class="highlight">wird in dieser Vorlesung verwendet</span>
+      </p>
+    </section>
+
+    <section data-state="gradle">
+      <style>.gradle header span:after {
+        content: "Gradle";
+      } </style>
+      <strong>Projektdatei: build.gradle</strong>
+      <pre class="groovy"><code>plugins {
+    id 'java'
+    id 'application'
+}
+
+mainClassName = 'App'
+
+dependencies {
+    testCompile 'junit:junit:4.12'
+}
+
+repositories {
+    mavenCentral()
+}</code></pre>
+    </section>
+
+    <section data-state="gradle">
+      <strong>Projektstruktur</strong>
+      <pre class="bash"><code> ├── build.gradle
+ ├── gradle
+ │   └── wrapper
+ │       ├── gradle-wrapper.jar
+ │       └── gradle-wrapper.properties
+ ├── gradlew
+ ├── gradlew.bat
+ ├── settings.gradle
+ └── src
+     ├── main
+     │   └── java
+     │       └── App.java
+     └── test
+         └── java
+             └── AppTest.java</code></pre>
+    </section>
+
+    <section data-state="gradle-tasks">
+      <style>.gradle-tasks header span:after {
+        content: "Gradle Tasks: Kurzübersicht";
+      } </style>
+      <p><code>gradle &lt;task&gt;</code></p>
+      <div class="row">
+        <div class="col-6">
+          <p>
+            <strong>init</strong><br>
+            erzeuge leeres Gradle Projekt
+          </p>
+        </div>
+        <div class="col-6">
+          <p>
+            <strong>clean</strong><br>
+            entferne class-Dateien
+          </p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-6">
+          <p>
+            <strong>test</strong><br>
+            teste Projekt
+          </p>
+        </div>
+        <div class="col-6">
+          <p>
+            <strong>run</strong><br>
+            starte Mainfunktion
+          </p>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-6">
+          <p>
+            <strong>tasks</strong><br>
+            zeige Liste aller verfügbaren Tasks
+          </p>
+        </div>
+        <div class="col-6">
+          <p>
+            <strong>distZip</strong><br>
+            erzeuge vollständig verpackte Anwendung als ZIP-File
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <section data-state="gradle-demo">
+      <style>.gradle-demo header span:after {
+        content: "Gradle: Demo";
+      } </style>
+      <img src="img/gradle_logo.svg" style="height: 2em;line-height:1.5em;margin-bottom: -12px;">
+      <div class="spacer"></div>
+      <h4>Demo</h4>
+    </section>
+
+    <section data-state="gradle-demo">
+      <p>Neues Projekt im Ordner "myproject" anlegen</p>
+      <pre class="bash"><code>λ gradle init --type=java-application</code></pre>
+
+      <p>build.gradle anpassen</p>
+      <pre class="bash"><code>λ nano build.gradle</code></pre>
+
+      <p>Plugin für gewünschte IDE hinzufügen</p>
+      <pre class="groovy"><code>plugins {
+    id 'java'
+    id 'application'
+    id 'idea'          // für IntelliJ
+    id 'eclipse'       // oder für Eclipse
+    // ...
+}</code></pre>
+    </section>
+
+    <section data-state="gradle-demo">
+      <p>Projektdateien für IDE anlegen
+        <small>(hier am Beispiel von IntelliJ)</small>
+      </p>
+      <pre class="bash"><code>λ gradle idea</code></pre>
+
+      <p>Projekt in IDE öffnen und bearbeiten</p>
+      <pre class="bash"><code>λ intellij .</code></pre>
+
+      <p>Projekt ausführen</p>
+      <pre class="bash"><code>λ gradle run</code></pre>
+
+      <p>Projekt testen</p>
+      <pre class="bash"><code>λ gradle test</code></pre>
+    </section>
+
+    <section data-state="gradle-demo">
+      <p>Externe Abhängigkeit fürs Testing einfügen
+        <small>(werden mit "testCompile" markiert)</small>
+      </p>
+      <pre class="groovy"><code>dependencies {
+    testCompile 'junit:junit:4.12'  // nur in Tests eingebunden
+}
+</code></pre>
+
+      <div class="spacer-small"></div>
+
+      <p>Externe Abhängigkeit für Produktivcode einfügen
+        <small>(werden mit "compile" markiert)</small>
+      </p>
+      <pre class="groovy"><code>dependencies {
+    testCompile 'junit:junit:4.12'
+    compile 'com.google.guava:guava:24.1-jre'  // <--
+}
+</code></pre>
+    </section>
+
+    <section data-state="gradle-demo">
+      <p>Externe Bibliotheken können nun verwendet werden</p>
+      <pre class="java"><code>import com.google.common.base.Strings;
+
+public class App {
+    public static void main(String[] args) {
+        String nanas = Strings.repeat("na, ", 8);
+        System.out.println(nanas);
+        System.out.println("Batman!");
+    }
+}</code></pre>
+
+      <pre class="bash"><code>λ gradle run
+> Task :compileJava
+> Task :processResources NO-SOURCE
+> Task :classes
+> Task :run
+na, na, na, na, na, na, na, na, Batman!
+
+BUILD SUCCESSFUL in 0s</code></pre>
+    </section>
+
+    <section data-state="gradle-demo">
+      <p>Projekt testen, bauen und in eine Zip verpacken</p>
+      <pre class="bash"><code>λ gradle distZip</code></pre>
+
+      <div class="spacer-small"></div>
+
+      <p>Das fertige Projekt kann nun verteilt werden<br>und befindet sich in:</p>
+      <pre class="bash"><code>build/distributions/myproject.zip</code></pre>
+    </section>
+
+    <section data-state="gradle-demo">
+      <p>Das Zip-File kann nun so ausgeführt werden:</p>
+      <pre class="bash"><code>λ cd build/distributions/
+λ unzip myproject.zip
+λ ./myproject/bin/myproject
+Hello world.</code></pre>
+    </section>
+
+    <!----------------------------------------------------------------------------------------------------------------->
+    <!-- Docker -->
+
+    <section>
+      <p>Kommen wir nun zu einem meiner Lieblingsthemen:</p>
+      <img src="img/docker_horizontal.svg" style="height: 3em;line-height:1.5em;margin-bottom: -12px;">
+    </section>
+
+    <section data-state="motivation">
+      <style>.motivation header span:after {
+        content: "Motivation";
+      } </style>
+
+      <p><strong>Szenario: Wir entwickeln einen Webservice</strong></p>
+      <p>Dafür benötigen wir einen "klassischen" Webstack:</p>
+      <ul>
+        <li>Webserver</li>
+        <li>Laufzeitumgebung</li>
+        <li>Datenbank</li>
+        <li>Cache</li>
+      </ul>
+    </section>
+
+    <section data-state="motivation">
+      <img src="img/LEMP_tutorial.png" alt="" style="width:500px;">
+      <div>Für die Installation gibt es durchaus Anleitungen...</div>
+      <small>
+        <small>
+          <a href="https://www.digitalocean.com/community/tutorials/how-to-install-linux-nginx-mysql-php-lemp-stack-in-ubuntu-16-04">
+            https://www.digitalocean.com/community/tutorials/how-to-install-linux-nginx-mysql-php-lemp-stack-in-ubuntu-16-04
+          </a>
+        </small>
+      </small>
+    </section>
+
+    <section data-state="motivation">
+      <img src="img/splitted-0.png" alt="" style="width: 180px;">
+      <img src="img/splitted-1.png" alt="" style="width: 180px;">
+      <img src="img/splitted-2.png" alt="" style="width: 180px;">
+      <img src="img/splitted-3.png" alt="" style="width: 180px;">
+      <div>
+        ... auf handlichen (und gut gemeinten) <strong>sechs</strong> DIN A4 Seiten
+      </div>
+    </section>
+
+    <section data-state="motivation">
+      <p>
+        <strong>Wer muss diese Tutorials lesen?</strong>
+      </p>
+      <div class="fragment">
+        <p>Jeder Entwickler im Team</p>
+        <p>Jeder Admin, der diesen Stack deployen möchte</p>
+      </div>
+    </section>
+
+    <section data-state="motivation">
+      <p>
+        <strong>Welche Nachteile gibt es?</strong>
+      </p>
+      <ul class="fragment">
+        <li>Redundanz</li>
+        <li>Zeitaufwand</li>
+        <li>Fehleranfälligkeit</li>
+        <li>...</li>
+      </ul>
+    </section>
+
+    <section data-state="lösungsansätze">
+      <style>.lösungsansätze header span:after {
+        content: "Lösungsansätze";
+      } </style>
+
+      <p>"Rezepte" für wiederkehrende Installationsschritte</p>
+      <p>Virtualisierung von Entwicklungsumgebungen</p>
+      <ul>
+        <li>VirtualBox</li>
+        <li>Vagrant</li>
+        <li>Linux Containers</li>
+        <li>...</li>
+        <li><img src="img/docker_horizontal.svg" style="height: 1em;line-height:1.5em;margin-bottom: -4px;"></li>
+      </ul>
+    </section>
+
+    <!--<section data-state="docker">-->
+    <!--<style>.docker header span:after {-->
+    <!--content: "Virtualisierung mit Docker";-->
+    <!--} </style>-->
+    <!--<p>Aufhebung externer Abhängigkeiten => Applikationen lassen sich autonom über Systeme hinweg verschieben</p>-->
+
+    <!--<blockquote>-->
+    <!--"Prior to Docker, the portability of an application or service was never guaranteed."-->
+    <!--</blockquote>-->
+    <!--David Messina, Docker-->
+    <!--</section>-->
+
+    <section data-state="vorstellung-docker">
+      <style>.vorstellung-docker header span:after {
+        content: "Vorstellung: Docker";
+      } </style>
+
+      <img src="img/docker_whale.svg" style="height: 2em;">
+      <p>Erster Commit 2013: nach einem Monat 10.000 Tester</p>
+      <p>2014: 2,75 Millionen Downloads</p>
+      <p>2015: 100+ Millionen Downloads</p>
+      <p>Heute: fast überall Standard</p>
+    </section>
+
+    <section data-state="begriffe-docker">
+      <style>.begriffe-docker header span:after {
+        content: "Begriffe";
+      } </style>
+
+      <strong>Container</strong>
+      <p>Instanz eines Images.</p>
+
+      <strong>Image</strong>
+      <p>Fertige Umgebung, in der Code ausgeführt werden kann. Besteht aus (mehreren) Layern.</p>
+
+      <strong>Layer</strong>
+      <p>Eine Instruktion zur Erstellung eines Images.</p>
+    </section>
+
+    <section data-state="dockervsvm">
+      <style>.dockervsvm header span:after {
+        content: "Virtuelle Maschinen vs. Docker";
+      } </style>
+      <p>
+        Leichtgewichtiger als Virtuelle Maschinen, da u.A. der Kernel des Hosts mit Docker geteilt wird
+      </p>
+      <p>
+        Nur die notwendigen Programme werden in einem Docker-Image mitgeliefert
+      </p>
+      <p>
+        Ein Docker-Container lässt sich innerhalb kürzester Zeit erstellen &mdash; und auch genauso schnell wieder
+        wegwerfen
+      </p>
+    </section>
+
+    <section data-state="vorteile-docker">
+      <style>.vorteile-docker header span:after {
+        content: "Was nutzt mir das?";
+      } </style>
+
+      <p>
+        <strong>Vorteile</strong>
+      </p>
+
+      <ul>
+        <li style="padding-bottom: 0.5em;">Portabilität von Anwendungen
+          <ul>
+            <li>Trennung von Anwendung und Infrastruktur</li>
+            <li>weniger Abhängigkeiten</li>
+          </ul>
+        </li>
+        <li style="padding-bottom: 0.5em;">Einfacher
+          <ul>
+            <li>man muss kein Linux-Profi sein, um ein Programm (bspw. einen Webserver) zu installieren</li>
+          </ul>
+        </li>
+        <li style="padding-bottom: 0.5em;">Weniger Sicherheitslücken
+          <ul>
+            <li>Minimale Images haben nur die notwendige Software</li>
+            <li>... aber Kernel wird geteilt</li>
+          </ul>
+        </li>
+      </ul>
+    </section>
+
+    <section data-state="vorteile-docker">
+      <p>
+        <strong>Gleiche Umgebung<br>für Development, Testing und Production</strong>
+      </p>
+      <img src="img/worksonmymachine_forbidden.jpg" alt="" style="height: 300px;">
+    </section>
+
+    <section data-state="systemvoraussetzungen">
+      <style>.systemvoraussetzungen header span:after {
+        content: "Systemvoraussetzungen";
+      } </style>
+
+      <strong>Linux</strong>
+      <p>Nativer Support</p>
+
+      <strong>macOS</strong>
+      <p>Linux-Kernel über VirtualBox bereitgestellt</p>
+
+      <strong>Windows</strong>
+      <p>Win 10 Pro, Enterprise und Education.<br>Linux-Kernel per VirtualBox oder nativ per Hyper-V.</p>
+      <small><a href="https://www.zim.hhu.de/services-des-zim/software/faqs-rund-um-software.html">Dreamspark FAQ der
+        HHU</a></small>
+    </section>
+
+    <section data-state="demo-header">
+      <style>.demo-header header span:after {
+        content: "Docker: Demo";
+      } </style>
+
+      <pre class="bash"><code>                ---------------
+               < Time to code! >
+                ---------------
+                  \
+                   \
+                    \
+                                  ##        .
+                            ## ## ##       ==
+                         ## ## ## ##      ===
+                     /""""""""""""""""___/ ===
+                ~~~ {~~ ~~~~ ~~~ ~~~~ ~~ ~ /  ===- ~~~
+                     \______ o          __/
+                      \    \        __/
+                        \____\______/
+      </code></pre>
+    </section>
+
+    <section data-state="demo-header">
+      <p>Erzeuge einen Debian Container</p>
+      <pre class="bash"><code>λ docker run -it debian:9 bash
+root@ea82f1464306:/ exit        # ea82..06 ist die Container ID
+λ docker run -it debian:9 bash
+root@ad2be33edb4b:/             # neuer Container, neue ID</code></pre>
+
+      <div class="spacer-small"></div>
+
+      <p>Andere Distributionen erhält man analog</p>
+      <pre class="bash"><code>λ docker run -it alpine sh
+/ > uname -a
+Linux c3dffad1d832 4.16.3-1-ARCH 1 SMP PREEMPT Thu Apr 19 09:17:56 UTC 2018 x86_64 Linux
+</code></pre>
+    </section>
+
+    <section data-state="demo-header">
+      <p>Laufende Container anzeigen</p>
+      <pre><code>λ docker ps</code></pre>
+
+      <p>Alle Container anzeigen</p>
+      <pre><code>λ docker ps -a
+CONTAINER ID  IMAGE     COMMAND  CREATED         STATUS                     PORTS  NAMES
+ad2be33edb4b  debian:9  "bash"   13 minutes ago  Exited (0) 12 minutes ago         awesome_visvesvaraya
+ea82f1464306  debian:9  "bash"   13 minutes ago  Exited (0) 13 minutes ago         condescending_shannon</code></pre>
+
+      <p>Images anzeigen</p>
+      <pre><code>λ docker images
+REPOSITORY  TAG     IMAGE ID      CREATED       SIZE
+debian      9       2b98c9851a37  6 weeks ago   100MB
+alpine      latest  3fd9065eaf02  3 months ago  4.14MB</code></pre>
+    </section>
+
+    <section data-state="demo-header">
+      <p>In den Containern können Programme installiert werden</p>
+      <pre class="bash"><code>λ docker run -it alpine sh
+/ > apk add --no-cache openjdk8
+# ...
+OK: 100 MiB in 51 packages
+/ > java -version
+openjdk version "1.8.0_151"
+OpenJDK Runtime Environment (IcedTea 3.6.0) (Alpine 8.151.12-r0)
+OpenJDK 64-Bit Server VM (build 25.151-b12, mixed mode)</code></pre>
+
+      <p>Dafür gibt es aber auch fertige Images auf DockerHub</p>
+      <pre class="bash"><code>λ docker run openjdk:8-alpine java --version
+openjdk version "1.8.0_151"
+OpenJDK Runtime Environment (IcedTea 3.6.0) (Alpine 8.151.12-r0)
+OpenJDK 64-Bit Server VM (build 25.151-b12, mixed mode)</code></pre>
+    </section>
+
+    <section data-state="demo-header">
+      <h4>Java Programme in Docker</h4>
+      <pre class="bash"><code>λ gradle init --type=java-application
+λ nano Dockerfile</code></pre>
+      <pre class="dockerfile"><code>FROM gradle:alpine
+COPY . /home/gradle    # kopiere alle Dateien des Hosts im
+                       # aktuellen Verzeichnis in den Container
+                       # nach /home/gradle
+USER root
+CMD ["gradle", "run"]  # Startbefehl</code></pre>
+      <pre class="bash"><code>λ docker build -t myhelloworld .
+λ docker run myhelloworld
+> Task :run
+Hello world.</code></pre>
+    </section>
+
+    <section data-state="demo-header">
+      <h4>Datenbanken</h4>
+      <p>Möchten wir Daten speichern, bieten sich Datenbanken an. Hier ein Beispiel mit dem Key-Value-Store
+        <a href="https://redis.io/">Redis</a>
+        (ähnlich einer HashMap).</p>
+      <pre class="bash"><code>λ docker run -p 6379:6379 redis:alpine</code></pre>
+
+      <div class="spacer-small"></div>
+
+      <p>Um sich mit der Datenbank zu verbinden,<br>verwenden wir hier
+        <a href="https://github.com/xetorthio/jedis">Jedis</a></p>
+      <pre class="groovy"><code>compile "redis.clients:jedis:2.9.0"</code></pre>
+    </section>
+
+    <section data-state="demo-header">
+      <h4>Datenbanken</h4>
+      <p>Zählt Programmstarts und speichert<br>den Wert in der Datenbank</p>
+      <pre class="java"><code>import redis.clients.jedis.Jedis;
+
+public class App {
+    private static void init(Jedis jedis) {
+        if (jedis.get("starts") == null) jedis.set("starts", "1");
+    }
+    public static void main(String[] args) {
+        Jedis jedis = new Jedis("localhost");
+        init(jedis);
+        System.out.println("Program starts: " + jedis.get("starts"));
+        jedis.incr("starts");
+    }
+}</code></pre>
+    </section>
+
+    <section data-state="demo-header">
+      <h4>Dynamisch Code aktualisieren</h4>
+      <p>Möchte ich den Code in einem Container während der Laufzeit ändern, muss ich ein <em>Volume Binding</em>
+        anwenden</p>
+      <p>Dafür erstellen wir eine minimale Webseite</p>
+      <pre class="html"><code>&lt;!-- Datei: index.html --&gt;
+&lt;html&gt;
+&lt;head&gt;&lt;title&gt;ProPra1&lt;/title&gt;&lt;/head&gt;
+&lt;body&gt;
+  &lt;h1&gt;Vorlesung zu Gradle und Docker&lt;/h1&gt;
+&lt;/body&gt;
+&lt;/html&gt;</code></pre>
+      <!--<p>Dafür konfigurieren wir zunächst den Webserver <a href="https://nginx.org/en/">nginx</a></p>-->
+      <!--<pre class="dockerfile"><code># Dockerfile-->
+      <!--FROM nginx-->
+      <!--COPY . /usr/share/nginx/html</code></pre>-->
+    </section>
+
+    <section data-state="demo-header">
+      <h4>Dynamisch Code aktualisieren</h4>
+      <p>Dann starten wir einen <a href="https://nginx.org/en/">nginx</a>-Webserver und laden die Datei index.html dort
+        hinein</p>
+      <pre class="bash"><code>λ docker run -p 80:80 -v `pwd`:/usr/share/nginx/html nginx:alpine</code></pre>
+      <p>Der Parameter `-v` sorgt dafür, dass alle angegebenen Dateien bidirektional gelesen und geschrieben werden</p>
+    </section>
+
+    <section data-state="demo-header">
+      <h4>Dynamisch Code aktualisieren</h4>
+      <p>Im Browser können wir nun <a href="http://localhost">http://localhost</a> aufrufen</p>
+      <img src="img/myindex.png" alt="">
+      <p>Wenn wir nun index.html verändern, ändert sich auch der Inhalt des Containers und damit auch die Webseite</p>
+    </section>
+
+    <section data-state="demo-header">
+      <p>
+        Teile des Codes aus der Demo-Session sind hier erreichbar:
+      </p>
+      <p>
+        <a href="https://github.com/n2o/introduction-to-docker">
+          https://github.com/n2o/lecture-ss18-gradle-docker
+        </a>
+      </p>
+    </section>
+
+    <section data-state="final">
+      <style>.final header span:after {
+        content: "Einführung in Gradle und Docker";
+      } </style>
+
+      <div class="row">
+        <div class="col-8">
+          <h4>Was wir heute gelernt haben</h4>
+          <small>
+            <ul>
+              <li>
+                Projekte erzeugen mit
+                <a href="https://gradle.org/">Gradle</a>
+              </li>
+              <li>Portabilität von Anwendungen mit <a href="https://www.docker.com/">Docker</a></li>
+              <li>Anwendungen in Docker Images verpacken</li>
+              <li>Docker Container laufen lassen</li>
+            </ul>
+          </small>
+          <h6 style="padding-top: 1em;">Christian Meter<br>
+            <small>
+              meter@cs.uni-duesseldorf.de
+            </small>
+          </h6>
+        </div>
+        <div class="col-4">
+          <img src="img/swarmnado.gif" alt="" style="width: 250px; margin-bottom: 0;">
+          <small>
+            <small>
+              Animation:
+              <a href="https://elbruno.com/2016/06/23/podcast-introduction-to-containers-thanks-docker-spanish/">elbruno.com</a>
+            </small>
+          </small>
+        </div>
+      </div>
+    </section>
+
+  </div>
+</div>
+
+<script src="reveal.js/lib/js/head.min.js"></script>
+<script src="reveal.js/js/reveal.js"></script>
+
+<script>
+    // More info https://github.com/hakimel/reveal.js#configuration
+    Reveal.initialize({
+        controls: true,
+        controlsTutorial: false,
+        controlsBackArrows: 'visible',
+        history: true,
+        center: true,
+        // slideNumber: true,
+        transition: 'fade', // none/fade/slide/convex/concave/zoom
+        // More info https://github.com/hakimel/reveal.js#dependencies
+        dependencies: [
+            {
+                src: 'reveal.js/plugin/highlight/highlight.js', async: true, callback: function () {
+                    hljs.initHighlightingOnLoad();
+                }
+            }
+        ]
+    });
+</script>
+</body>
+</html>
