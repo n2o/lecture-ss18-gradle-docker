@@ -698,14 +698,10 @@ Hello world.</code></pre>
       <pre class="java"><code>import redis.clients.jedis.Jedis;
 
 public class App {
-    private static void init(Jedis jedis) {
-        if (jedis.get("starts") == null) jedis.set("starts", "1");
-    }
     public static void main(String[] args) {
         Jedis jedis = new Jedis("localhost");
-        init(jedis);
-        System.out.println("Program starts: " + jedis.get("starts"));
         jedis.incr("starts");
+        System.out.println("Program starts: " + jedis.get("starts"));
     }
 }</code></pre>
     </section>
