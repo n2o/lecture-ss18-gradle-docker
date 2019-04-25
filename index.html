@@ -218,7 +218,7 @@ OK (1 test)</code></pre>
 mainClassName = 'App'
 
 dependencies {
-    testCompile 'junit:junit:4.12'
+    testImplementation 'junit:junit:4.12'
 }
 
 repositories {
@@ -338,10 +338,10 @@ repositories {
 
     <section data-state="gradle-demo">
       <p>Externe Abhängigkeit fürs Testing einfügen
-        <small>(werden mit "testCompile" markiert)</small>
+        <small>(werden mit "testImplementation" markiert)</small>
       </p>
       <pre class="groovy"><code>dependencies {
-    testCompile 'junit:junit:4.12'  // nur in Tests eingebunden
+    testImplementation 'junit:junit:4.12'  // nur in Tests eingebunden
 }
 </code></pre>
 
@@ -351,8 +351,8 @@ repositories {
         <small>(werden mit "compile" markiert)</small>
       </p>
       <pre class="groovy"><code>dependencies {
-    testCompile 'junit:junit:4.12'
-    compile 'com.google.guava:guava:24.1-jre'  // <--
+    testImplementation 'junit:junit:4.12'
+    implementation 'com.google.guava:guava:24.1-jre'  // <--
 }
 </code></pre>
     </section>
